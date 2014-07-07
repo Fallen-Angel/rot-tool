@@ -80,7 +80,7 @@ namespace Homeworld2.ROT
 
         private void ReadMIPSChunk(IFFReader iff, ChunkAttributes attr)
         {
-            iff.AddHandler("MLVL", ChunkType.Form, ReadMLVLChunk);
+            iff.AddHandler(Chunks.MipmapLevel, ChunkType.Form, ReadMLVLChunk);
 
             iff.Parse();
         }
@@ -97,8 +97,8 @@ namespace Homeworld2.ROT
             Mipmaps.Clear();
 
             var iff = new IFFReader(stream);
-            iff.AddHandler("HEAD", ChunkType.Form, ReadHEADChunk);
-            iff.AddHandler("MIPS", ChunkType.Form, ReadMIPSChunk);
+            iff.AddHandler(Chunks.Header, ChunkType.Form, ReadHEADChunk);
+            iff.AddHandler(Chunks.Mipmaps, ChunkType.Form, ReadMIPSChunk);
             iff.Parse();
         }
 
@@ -106,19 +106,17 @@ namespace Homeworld2.ROT
         {
             var iff = new IFFWriter(stream);
             
-            iff.Push("HEAD", ChunkType.Form);
+            iff.Push(Chunks.Header, ChunkType.Form);
             iff.Write(Width);
             iff.Write(Height);
             iff.Write((uint)Format);
             iff.Write(MipmapsCount);
             iff.Pop();
 
-            iff.Push("MIPS", ChunkType.Form);
+            iff.Push(Chunks.Mipmaps, ChunkType.Form);
             foreach (var mipmap in Mipmaps)
             {
-                iff.Push("MLVL", ChunkType.Form);
                 mipmap.Write(iff);
-                iff.Pop();
             }
             iff.Pop();
         }

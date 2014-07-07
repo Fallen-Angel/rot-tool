@@ -35,8 +35,7 @@ namespace Homeworld2.ROT
         {
             Width = bitmap.PixelWidth;
             Height = bitmap.PixelHeight;
-            DataSize = bitmap.PixelHeight * bitmap.PixelWidth * 4;
-            var imageData = new byte[DataSize];
+            var imageData = new byte[bitmap.PixelHeight * bitmap.PixelWidth * 4];
 
             var scale = new ScaleTransform(1, -1);
             var bmp = new TransformedBitmap(bitmap, scale);
@@ -63,10 +62,10 @@ namespace Homeworld2.ROT
                 }
 
                 imageData = Squish.CompressImage(imageData, Width, Height, flags);
-                DataSize = imageData.Length;
             }
 
             Data = SwapBR(imageData);
+            DataSize = Data.Length;
         }
 
         public void Read(IFFReader iff, Format format)
@@ -110,11 +109,15 @@ namespace Homeworld2.ROT
 
         public void Write(IFFWriter iff)
         {
+            iff.Push(Chunks.MipmapLevel, ChunkType.Form);
+
             iff.Write(Level);
             iff.Write(Width);
             iff.Write(Height);
             iff.Write(DataSize);
             iff.Write(Data);
+
+            iff.Pop();
         }
     }
 }
