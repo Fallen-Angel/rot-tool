@@ -1,0 +1,17 @@
+﻿<Window x:Class="RotTool.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Relic Texture Tool" Height="350" Width="525" Icon="decade.ico" AllowDrop="True" Drop="Window_Drop_1">
+    <Grid>
+        <DockPanel>
+            <ToolBar DockPanel.Dock="Top">
+                <Label Content="Select mode:"/>
+                <RadioButton Content="RGBA32" IsChecked="True" Checked="RadioButton_Checked_1"/>
+                <RadioButton Content="DXT1" Margin="0,0,0,1.6" VerticalAlignment="Bottom" Checked="RadioButton_Checked_2" />
+                <RadioButton Content="DXT3" Checked="RadioButton_Checked_3"/>
+                <RadioButton Content="DXT5" Checked="RadioButton_Checked_4"/>
+            </ToolBar>
+            <Label Content="Drop files here" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="48"/>
+        </DockPanel>
+    </Grid>
+</Window>
