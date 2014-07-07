@@ -1,13 +1,9 @@
-﻿using System;
+﻿using Homeworld2.IFF;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Homeworld2.IFF;
 using System.IO;
-using System.Windows.Media.Imaging;
-using ManagedSquish;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace Homeworld2.ROT
 {
@@ -21,86 +17,65 @@ namespace Homeworld2.ROT
 
     public class ROT
     {
-        private int width;
-        private int height;
-        private Format format;
-        private int mipmapsCount;
-
-        private List<Mipmap> mipmaps = new List<Mipmap>();
-        private BitmapSource tempBitmap;
-
-        public int Width
+        public ROT()
         {
-            get { return width; }
+            Mipmaps = new List<Mipmap>();
         }
 
-        public int Height
-        {
-            get { return height; }
-        }
+        public int Width { get; private set; }
 
-        public Format Format
-        {
-            get { return format; }
-            set { format = value; }
-        }
+        public int Height { get; private set; }
 
-        public int MipmapsCount
-        {
-            get { return mipmapsCount; }
-        }
+        public Format Format { get; set; }
 
-        public List<Mipmap> Mipmaps
-        {
-            get { return mipmaps; }
-        }
+        public int MipmapsCount { get; private set; }
+
+        public List<Mipmap> Mipmaps { get; private set; }
 
         public BitmapSource Bitmap
         {
-            get { return mipmaps[0].Bitmap; }
+            get { return Mipmaps[0].Bitmap; }
         }
 
         public void GenerateMipmaps(BitmapSource bitmap)
         {
-            width = bitmap.PixelWidth;
-            height = bitmap.PixelHeight;
+            Width = bitmap.PixelWidth;
+            Height = bitmap.PixelHeight;
 
-            mipmaps.Clear();
+            Mipmaps.Clear();
 
-            if (format != Format.RGBA32)
+            if (Format != Format.RGBA32)
             {
-                Mipmap mipmap = new Mipmap();
-                mipmap.SetBitmap(bitmap, format);
-                mipmaps.Add(mipmap);
+                var mipmap = new Mipmap();
+                mipmap.SetBitmap(bitmap, Format);
+                Mipmaps.Add(mipmap);
             }
             else
             {
-                int log = (int)Math.Log(Math.Max(width, height), 2);
+                int log = (int)Math.Log(Math.Max(Width, Height), 2);
 
-                TransformedBitmap bmp;
-                ScaleTransform scale;
                 for (int i = 0; i <= log; ++i)
                 {
                     double factor = 1 / Math.Pow(2, i);
 
-                    Mipmap mipmap = new Mipmap();
-                    scale = new ScaleTransform(factor, factor);
-                    bmp = new TransformedBitmap(bitmap, scale);
-                    mipmap.SetBitmap(bmp, format);
+                    var mipmap = new Mipmap();
+                    var scale = new ScaleTransform(factor, factor);
+                    var bmp = new TransformedBitmap(bitmap, scale);
+                    mipmap.SetBitmap(bmp, Format);
                     mipmap.Level = i;
-                    mipmaps.Add(mipmap);
+                    Mipmaps.Add(mipmap);
                 }
             }
 
-            mipmapsCount = mipmaps.Count;
+            MipmapsCount = Mipmaps.Count;
         }
 
         private void ReadHEADChunk(IFFReader iff, ChunkAttributes attr)
         {
-            width = iff.ReadInt32();
-            height = iff.ReadInt32();
-            format = (Format)iff.ReadUInt32();
-            mipmapsCount = iff.ReadInt32();
+            Width = iff.ReadInt32();
+            Height = iff.ReadInt32();
+            Format = (Format)iff.ReadUInt32();
+            MipmapsCount = iff.ReadInt32();
         }
 
         private void ReadMIPSChunk(IFFReader iff, ChunkAttributes attr)
@@ -112,16 +87,16 @@ namespace Homeworld2.ROT
 
         private void ReadMLVLChunk(IFFReader iff, ChunkAttributes attr)
         {
-            Mipmap mipmap = new Mipmap();
-            mipmaps.Add(mipmap);
-            mipmap.Read(iff, format);
+            var mipmap = new Mipmap();
+            Mipmaps.Add(mipmap);
+            mipmap.Read(iff, Format);
         }
 
         public void Read(Stream stream)
         {
-            mipmaps.Clear();
+            Mipmaps.Clear();
 
-            IFFReader iff = new IFFReader(stream);
+            var iff = new IFFReader(stream);
             iff.AddHandler("HEAD", ChunkType.Form, ReadHEADChunk);
             iff.AddHandler("MIPS", ChunkType.Form, ReadMIPSChunk);
             iff.Parse();
@@ -129,20 +104,20 @@ namespace Homeworld2.ROT
 
         public void Write(Stream stream)
         {
-            IFFWriter iff = new IFFWriter(stream);
+            var iff = new IFFWriter(stream);
             
             iff.Push("HEAD", ChunkType.Form);
-            iff.Write(width);
-            iff.Write(height);
-            iff.Write((uint)format);
-            iff.Write(mipmapsCount);
+            iff.Write(Width);
+            iff.Write(Height);
+            iff.Write((uint)Format);
+            iff.Write(MipmapsCount);
             iff.Pop();
 
             iff.Push("MIPS", ChunkType.Form);
-            for (int i = 0; i < mipmaps.Count; ++i)
+            foreach (var mipmap in Mipmaps)
             {
                 iff.Push("MLVL", ChunkType.Form);
-                mipmaps[i].Write(iff);
+                mipmap.Write(iff);
                 iff.Pop();
             }
             iff.Pop();

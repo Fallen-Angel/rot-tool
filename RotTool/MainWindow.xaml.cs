@@ -23,18 +23,18 @@ namespace RotTool
     /// </summary>
     public partial class MainWindow : Window
     {
-        private ROT ROT;
-        private Format format;
+        private readonly ROT _rot;
+        private Format _format;
 
         public MainWindow()
         {
             InitializeComponent();
-            ROT = new ROT();
+            _rot = new ROT();
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            About about = new About();
+            var about = new About();
             about.ShowDialog();
         }
 
@@ -43,51 +43,46 @@ namespace RotTool
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 // Note that you can have more than one file.
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
 
                 // Assuming you have one file that you care about, pass it off to whatever
                 // handling code you have defined.
-                foreach (string name in files)
+                foreach (var name in files)
                 {
                     if (System.IO.Path.GetExtension(name) == ".rot")
                     {
-                        using (FileStream file = File.Open(name, FileMode.Open))
+                        using (var file = File.Open(name, FileMode.Open))
                         {
-                            ROT.Read(file);
+                            _rot.Read(file);
                         }
 
-                        PngBitmapEncoder png = new PngBitmapEncoder();
-                        BitmapFrame frame = BitmapFrame.Create(ROT.Bitmap);
-                        png.Frames.Add(frame);
+                        var encoder = new PngBitmapEncoder();
+                        var frame = BitmapFrame.Create(_rot.Bitmap);
+                        encoder.Frames.Add(frame);
 
-                        using (FileStream file = File.Open(name + ".png", FileMode.Create))
+                        using (var file = File.Open(name + ".png", FileMode.Create))
                         {
-                            png.Save(file);
-                        }
-
-                        using (FileStream file = File.Open(name + " kopia.rot", FileMode.Create))
-                        {
-                            ROT.Write(file);
+                            encoder.Save(file);
                         }
                     }
                     else
                     {
                         BitmapDecoder decoder;
-                        using (FileStream file = File.Open(name, FileMode.Open))
+                        using (var file = File.Open(name, FileMode.Open))
                         {
                             decoder = BitmapDecoder.Create(file, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
                         }
 
-                        BitmapFrame frame = decoder.Frames[0];
+                        var frame = decoder.Frames[0];
 
-                        FormatConvertedBitmap bmp = new FormatConvertedBitmap(frame, PixelFormats.Bgra32, null, 0);
+                        var bitmap = new FormatConvertedBitmap(frame, PixelFormats.Bgra32, null, 0);
 
-                        ROT.Format = format; ;
-                        ROT.GenerateMipmaps(bmp);
+                        _rot.Format = _format; ;
+                        _rot.GenerateMipmaps(bitmap);
 
-                        using (FileStream file = File.Open(name + ".rot", FileMode.Create))
+                        using (var file = File.Open(name + ".rot", FileMode.Create))
                         {
-                            ROT.Write(file);
+                            _rot.Write(file);
                         }
                     }
                 }
@@ -96,22 +91,22 @@ namespace RotTool
 
         private void RadioButton_Checked_1(object sender, RoutedEventArgs e)
         {
-            format = Format.RGBA32;
+            _format = Format.RGBA32;
         }
 
         private void RadioButton_Checked_2(object sender, RoutedEventArgs e)
         {
-            format = Format.DXT1;
+            _format = Format.DXT1;
         }
 
         private void RadioButton_Checked_3(object sender, RoutedEventArgs e)
         {
-            format = Format.DXT3;
+            _format = Format.DXT3;
         }
 
         private void RadioButton_Checked_4(object sender, RoutedEventArgs e)
         {
-            format = Format.DXT5;
+            _format = Format.DXT5;
         }
     }
 }
