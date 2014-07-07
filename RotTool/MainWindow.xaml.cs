@@ -23,13 +23,11 @@ namespace RotTool
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly ROT _rot;
         private Format _format;
 
         public MainWindow()
         {
             InitializeComponent();
-            _rot = new ROT();
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -49,15 +47,16 @@ namespace RotTool
                 // handling code you have defined.
                 foreach (var name in files)
                 {
+                    ROT rot;
                     if (System.IO.Path.GetExtension(name) == ".rot")
                     {
                         using (var file = File.Open(name, FileMode.Open))
                         {
-                            _rot.Read(file);
+                            rot = ROT.Read(file);
                         }
 
                         var encoder = new PngBitmapEncoder();
-                        var frame = BitmapFrame.Create(_rot.Bitmap);
+                        var frame = BitmapFrame.Create(rot.Bitmap);
                         encoder.Frames.Add(frame);
 
                         using (var file = File.Open(name + ".png", FileMode.Create))
@@ -77,12 +76,12 @@ namespace RotTool
 
                         var bitmap = new FormatConvertedBitmap(frame, PixelFormats.Bgra32, null, 0);
 
-                        _rot.Format = _format; ;
-                        _rot.GenerateMipmaps(bitmap);
+                        rot = new ROT { Format = _format };
+                        rot.GenerateMipmaps(bitmap);
 
                         using (var file = File.Open(name + ".rot", FileMode.Create))
                         {
-                            _rot.Write(file);
+                            rot.Write(file);
                         }
                     }
                 }

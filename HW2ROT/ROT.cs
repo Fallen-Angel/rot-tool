@@ -87,19 +87,19 @@ namespace Homeworld2.ROT
 
         private void ReadMLVLChunk(IFFReader iff, ChunkAttributes attr)
         {
-            var mipmap = new Mipmap();
-            Mipmaps.Add(mipmap);
-            mipmap.Read(iff, Format);
+            Mipmaps.Add(Mipmap.Read(iff, Format));
         }
 
-        public void Read(Stream stream)
+        public static ROT Read(Stream stream)
         {
-            Mipmaps.Clear();
+            var rot = new ROT();
 
             var iff = new IFFReader(stream);
-            iff.AddHandler(Chunks.Header, ChunkType.Form, ReadHEADChunk);
-            iff.AddHandler(Chunks.Mipmaps, ChunkType.Form, ReadMIPSChunk);
+            iff.AddHandler(Chunks.Header, ChunkType.Form, rot.ReadHEADChunk);
+            iff.AddHandler(Chunks.Mipmaps, ChunkType.Form, rot.ReadMIPSChunk);
             iff.Parse();
+
+            return rot;
         }
 
         public void Write(Stream stream)

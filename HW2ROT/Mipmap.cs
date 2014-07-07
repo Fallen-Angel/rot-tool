@@ -68,18 +68,22 @@ namespace Homeworld2.ROT
             DataSize = Data.Length;
         }
 
-        public void Read(IFFReader iff, Format format)
+        public static Mipmap Read(IFFReader iff, Format format)
         {
-            Level = iff.ReadInt32();
-            Width = iff.ReadInt32();
-            Height = iff.ReadInt32();
-            DataSize = iff.ReadInt32();
-            Data = iff.ReadBytes(DataSize);
+            var mipmap = new Mipmap
+            {
+                Level = iff.ReadInt32(),
+                Width = iff.ReadInt32(),
+                Height = iff.ReadInt32(),
+                DataSize = iff.ReadInt32()
+            };
+
+            mipmap.Data = iff.ReadBytes(mipmap.DataSize);
 
             byte[] imageData;
             if (format == Format.RGBA32)
             {
-                imageData = Data;
+                imageData = mipmap.Data;
             }
             else
             {
@@ -98,13 +102,15 @@ namespace Homeworld2.ROT
                         break;
                 }
 
-                imageData = Squish.DecompressImage(Data, Width, Height, flags);
+                imageData = Squish.DecompressImage(mipmap.Data, mipmap.Width, mipmap.Height, flags);
             }
 
-            Bitmap = BitmapSource.Create(Width, Height, 96, 96, PixelFormats.Bgra32, null, SwapBR(imageData), Width * 4);
+            mipmap.Bitmap = BitmapSource.Create(mipmap.Width, mipmap.Height, 96, 96, PixelFormats.Bgra32, null, SwapBR(imageData), mipmap.Width * 4);
 
             var scale = new ScaleTransform(1, -1);
-            Bitmap = new TransformedBitmap(Bitmap, scale);
+            mipmap.Bitmap = new TransformedBitmap(mipmap.Bitmap, scale);
+
+            return mipmap;
         }
 
         public void Write(IFFWriter iff)
