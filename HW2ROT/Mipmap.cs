@@ -1,12 +1,12 @@
 ﻿using Homeworld2.IFF;
 using ManagedSquish;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace Homeworld2.ROT
 {
     public class Mipmap
     {
+        private readonly Format _format;
+
         public int Level { get; set; }
 
         public int Width { get; private set; }
@@ -16,33 +16,26 @@ namespace Homeworld2.ROT
         public int DataSize { get; private set; }
         public byte[] Data { get; private set; }
 
-        public BitmapSource Bitmap { get; private set; }
-
-        private static byte[] SwapBR(byte[] data)
+        private Mipmap(Format format)
         {
-            data = (byte[])data.Clone();
-            for (int i = 0; i < data.Length / 4; ++i)
-            {
-                var b = data[i * 4];
-                var r = data[i * 4 + 2];
-                data[i * 4] = r;
-                data[i * 4 + 2] = b;
-            }
-            return data;
+            _format = format;
         }
 
-        public void SetBitmap(BitmapSource bitmap, Format format)
+        /// <summary>
+        /// Initializes a new instance of the Mipmap class that has the specified dimensions, format and image data.
+        /// </summary>
+        /// <param name="width">Width</param>
+        /// <param name="height">Height</param>
+        /// <param name="format">Data format</param>
+        /// <param name="data">Source RGBA32 image data</param>
+        public Mipmap(int width, int height, Format format, byte[] data) : this(format)
         {
-            Width = bitmap.PixelWidth;
-            Height = bitmap.PixelHeight;
-            var imageData = new byte[bitmap.PixelHeight * bitmap.PixelWidth * 4];
-
-            var scale = new ScaleTransform(1, -1);
-            var bmp = new TransformedBitmap(bitmap, scale);
-            bmp.CopyPixels(imageData, bitmap.PixelWidth * 4, 0);
+            Width = width;
+            Height = height;
 
             if (format == Format.RGBA32)
             {
+                Data = data;
             }
             else
             {
@@ -61,16 +54,15 @@ namespace Homeworld2.ROT
                         break;
                 }
 
-                imageData = Squish.CompressImage(imageData, Width, Height, flags);
+                Data = Squish.CompressImage(data, Width, Height, flags);
             }
 
-            Data = SwapBR(imageData);
             DataSize = Data.Length;
         }
 
         public static Mipmap Read(IFFReader iff, Format format)
         {
-            var mipmap = new Mipmap
+            var mipmap = new Mipmap(format)
             {
                 Level = iff.ReadInt32(),
                 Width = iff.ReadInt32(),
@@ -79,36 +71,6 @@ namespace Homeworld2.ROT
             };
 
             mipmap.Data = iff.ReadBytes(mipmap.DataSize);
-
-            byte[] imageData;
-            if (format == Format.RGBA32)
-            {
-                imageData = mipmap.Data;
-            }
-            else
-            {
-                var flags = SquishFlags.Dxt5;
-
-                switch (format)
-                {
-                    case Format.DXT1:
-                        flags = SquishFlags.Dxt1;
-                        break;
-                    case Format.DXT3:
-                        flags = SquishFlags.Dxt3;
-                        break;
-                    case Format.DXT5:
-                        flags = SquishFlags.Dxt5;
-                        break;
-                }
-
-                imageData = Squish.DecompressImage(mipmap.Data, mipmap.Width, mipmap.Height, flags);
-            }
-
-            mipmap.Bitmap = BitmapSource.Create(mipmap.Width, mipmap.Height, 96, 96, PixelFormats.Bgra32, null, SwapBR(imageData), mipmap.Width * 4);
-
-            var scale = new ScaleTransform(1, -1);
-            mipmap.Bitmap = new TransformedBitmap(mipmap.Bitmap, scale);
 
             return mipmap;
         }
@@ -124,6 +86,31 @@ namespace Homeworld2.ROT
             iff.Write(Data);
 
             iff.Pop();
+        }
+
+        public byte[] Decompress()
+        {
+            if (_format == Format.RGBA32)
+            {
+                return Data;
+            }
+
+            var flags = SquishFlags.Dxt5;
+
+            switch (_format)
+            {
+                case Format.DXT1:
+                    flags = SquishFlags.Dxt1;
+                    break;
+                case Format.DXT3:
+                    flags = SquishFlags.Dxt3;
+                    break;
+                case Format.DXT5:
+                    flags = SquishFlags.Dxt5;
+                    break;
+            }
+
+            return Squish.DecompressImage(Data, Width, Height, flags);
         }
     }
 }

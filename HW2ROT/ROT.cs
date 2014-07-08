@@ -1,9 +1,6 @@
 ﻿using Homeworld2.IFF;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace Homeworld2.ROT
 {
@@ -27,52 +24,16 @@ namespace Homeworld2.ROT
 
         public List<Mipmap> Mipmaps { get; private set; }
 
-        public BitmapSource Bitmap
-        {
-            get { return Mipmaps[0].Bitmap; }
-        }
-
         private ROT()
         {
             Mipmaps = new List<Mipmap>();
         }
 
-        public ROT(Format format) : this()
+        public ROT(int width, int height, Format format) : this()
         {
+            Width = width;
+            Height = height;
             Format = format;
-        }
-
-        public void GenerateMipmaps(BitmapSource bitmap)
-        {
-            Width = bitmap.PixelWidth;
-            Height = bitmap.PixelHeight;
-
-            Mipmaps.Clear();
-
-            if (Format != Format.RGBA32)
-            {
-                var mipmap = new Mipmap();
-                mipmap.SetBitmap(bitmap, Format);
-                Mipmaps.Add(mipmap);
-            }
-            else
-            {
-                int mipmapCount = (int)Math.Log(Math.Max(Width, Height), 2);
-
-                for (int level = 0; level <= mipmapCount; ++level)
-                {
-                    double scaleFactor = 1 / Math.Pow(2, level);
-
-                    var mipmap = new Mipmap();
-                    var scale = new ScaleTransform(scaleFactor, scaleFactor);
-                    var bmp = new TransformedBitmap(bitmap, scale);
-                    mipmap.SetBitmap(bmp, Format);
-                    mipmap.Level = level;
-                    Mipmaps.Add(mipmap);
-                }
-            }
-
-            MipmapsCount = Mipmaps.Count;
         }
 
         private void ReadHEADChunk(IFFReader iff, ChunkAttributes attr)
@@ -115,7 +76,7 @@ namespace Homeworld2.ROT
             iff.Write(Width);
             iff.Write(Height);
             iff.Write((uint)Format);
-            iff.Write(MipmapsCount);
+            iff.Write(Mipmaps.Count);
             iff.Pop();
 
             iff.Push(Chunks.Mipmaps, ChunkType.Form);

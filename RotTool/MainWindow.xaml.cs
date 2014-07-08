@@ -1,20 +1,8 @@
 ﻿using Homeworld2.ROT;
-using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
+using RotTool.ViewModels;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace RotTool
 {
@@ -38,51 +26,49 @@ namespace RotTool
 
         private void Window_Drop_1(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+                return;
+
+            // Note that you can have more than one file.
+            var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+            // Assuming you have one file that you care about, pass it off to whatever
+            // handling code you have defined.
+            foreach (var name in files)
             {
-                // Note that you can have more than one file.
-                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-
-                // Assuming you have one file that you care about, pass it off to whatever
-                // handling code you have defined.
-                foreach (var name in files)
+                TextureViewModel texture;
+                if (Path.GetExtension(name) == ".rot")
                 {
-                    ROT rot;
-                    if (System.IO.Path.GetExtension(name) == ".rot")
+                    using (var file = File.Open(name, FileMode.Open))
                     {
-                        using (var file = File.Open(name, FileMode.Open))
-                        {
-                            rot = ROT.Read(file);
-                        }
-
-                        var encoder = new PngBitmapEncoder();
-                        var frame = BitmapFrame.Create(rot.Bitmap);
-                        encoder.Frames.Add(frame);
-
-                        using (var file = File.Open(name + ".png", FileMode.Create))
-                        {
-                            encoder.Save(file);
-                        }
+                        texture = new TextureViewModel(ROT.Read(file));
                     }
-                    else
+
+                    var encoder = new PngBitmapEncoder();
+                    var frame = BitmapFrame.Create(texture.Bitmap);
+                    encoder.Frames.Add(frame);
+
+                    using (var file = File.Create(name + ".png"))
                     {
-                        BitmapDecoder decoder;
-                        using (var file = File.Open(name, FileMode.Open))
-                        {
-                            decoder = BitmapDecoder.Create(file, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-                        }
+                        encoder.Save(file);
+                    }
+                }
+                else
+                {
+                    BitmapDecoder decoder;
+                    using (var file = File.Open(name, FileMode.Open))
+                    {
+                        decoder = BitmapDecoder.Create(file, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                    }
 
-                        var frame = decoder.Frames[0];
+                    var bitmap = decoder.Frames[0];
+                        
+                    texture = new TextureViewModel(new ROT(bitmap.PixelWidth, bitmap.PixelHeight, _format));
+                    texture.GenerateMipmaps(bitmap);
 
-                        var bitmap = new FormatConvertedBitmap(frame, PixelFormats.Bgra32, null, 0);
-
-                        rot = new ROT(_format);
-                        rot.GenerateMipmaps(bitmap);
-
-                        using (var file = File.Open(name + ".rot", FileMode.Create))
-                        {
-                            rot.Write(file);
-                        }
+                    using (var file = File.Create(name + ".rot"))
+                    {
+                        texture.Write(file);
                     }
                 }
             }
