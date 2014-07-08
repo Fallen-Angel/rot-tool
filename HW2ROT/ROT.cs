@@ -17,16 +17,11 @@ namespace Homeworld2.ROT
 
     public class ROT
     {
-        public ROT()
-        {
-            Mipmaps = new List<Mipmap>();
-        }
-
         public int Width { get; private set; }
 
         public int Height { get; private set; }
 
-        public Format Format { get; set; }
+        public Format Format { get; private set; }
 
         public int MipmapsCount { get; private set; }
 
@@ -35,6 +30,16 @@ namespace Homeworld2.ROT
         public BitmapSource Bitmap
         {
             get { return Mipmaps[0].Bitmap; }
+        }
+
+        private ROT()
+        {
+            Mipmaps = new List<Mipmap>();
+        }
+
+        public ROT(Format format) : this()
+        {
+            Format = format;
         }
 
         public void GenerateMipmaps(BitmapSource bitmap)
@@ -52,17 +57,17 @@ namespace Homeworld2.ROT
             }
             else
             {
-                int log = (int)Math.Log(Math.Max(Width, Height), 2);
+                int mipmapCount = (int)Math.Log(Math.Max(Width, Height), 2);
 
-                for (int i = 0; i <= log; ++i)
+                for (int level = 0; level <= mipmapCount; ++level)
                 {
-                    double factor = 1 / Math.Pow(2, i);
+                    double scaleFactor = 1 / Math.Pow(2, level);
 
                     var mipmap = new Mipmap();
-                    var scale = new ScaleTransform(factor, factor);
+                    var scale = new ScaleTransform(scaleFactor, scaleFactor);
                     var bmp = new TransformedBitmap(bitmap, scale);
                     mipmap.SetBitmap(bmp, Format);
-                    mipmap.Level = i;
+                    mipmap.Level = level;
                     Mipmaps.Add(mipmap);
                 }
             }

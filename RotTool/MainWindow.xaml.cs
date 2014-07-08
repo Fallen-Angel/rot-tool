@@ -76,7 +76,7 @@ namespace RotTool
 
                         var bitmap = new FormatConvertedBitmap(frame, PixelFormats.Bgra32, null, 0);
 
-                        rot = new ROT { Format = _format };
+                        rot = new ROT(_format);
                         rot.GenerateMipmaps(bitmap);
 
                         using (var file = File.Open(name + ".rot", FileMode.Create))
