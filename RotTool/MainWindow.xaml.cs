@@ -37,7 +37,7 @@ namespace RotTool
             foreach (var name in files)
             {
                 TextureViewModel texture;
-                if (Path.GetExtension(name) == ".rot")
+                if (Path.GetExtension(name)?.ToUpperInvariant() == ".ROT")
                 {
                     using (var file = File.Open(name, FileMode.Open))
                     {
