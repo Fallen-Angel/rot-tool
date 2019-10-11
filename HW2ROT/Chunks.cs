@@ -1,6 +1,4 @@
-﻿using System.Runtime.Remoting.Messaging;
-
-namespace Homeworld2.ROT
+﻿namespace Homeworld2.ROT
 {
     public abstract class Chunks
     {
