@@ -60,18 +60,20 @@ namespace Homeworld2.ROT
         {
             var rot = new ROT();
 
-            var iff = new IFFReader(stream);
-            iff.AddHandler(Chunks.Header, ChunkType.Form, rot.ReadHEADChunk);
-            iff.AddHandler(Chunks.Mipmaps, ChunkType.Form, rot.ReadMIPSChunk);
-            iff.Parse();
+            using (var iff = new IFFReader(stream))
+            {
+                iff.AddHandler(Chunks.Header, ChunkType.Form, rot.ReadHEADChunk);
+                iff.AddHandler(Chunks.Mipmaps, ChunkType.Form, rot.ReadMIPSChunk);
+                iff.Parse();
+            }
 
             return rot;
         }
 
         public void Write(Stream stream)
         {
-            var iff = new IFFWriter(stream);
-            
+            using var iff = new IFFWriter(stream);
+
             iff.Push(Chunks.Header, ChunkType.Form);
             iff.Write(Width);
             iff.Write(Height);
